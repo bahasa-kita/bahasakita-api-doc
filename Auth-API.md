@@ -1,6 +1,6 @@
 
-# AUTH API DOCUMENTATION VERS 
-Documentation API to bahasakita speech recognition and NLP service `r total_area`
+# AUTH API DOCUMENTATION
+Documentation API to bahasakita speech recognition and NLP service.
 
 
 #### **Table of Contents**
