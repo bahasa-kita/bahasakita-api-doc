@@ -32,7 +32,7 @@ Documentation API STT to bahasakita speech recognition service with the WebSocke
   1. get token with access [Our API](./Auth-API.md)
   2. Send request message [AudioConn state](#state-1-audioconn) to get `sess_id=********`  from speech recognition service.
   3. Read bytes of the audio from your computer source ( microphone or file).
-  4. Add `sess_id=********` in request message [AudioStream state](#state-2-audiostream), please send  audio chunks size of `3200 bytes`.
+  4. Add `sess_id=********` in request message [AudioStream state](#state-2-audiostream), please send  `audio raw` format `signed integer` chunks size of `3200 bytes`  with `samplerate 16000` and `mono channel`.
   5. Speech recognition service will return transcript response
   6. Send request message [AudioStop state](#state-3-audiostop) to end process.
 

@@ -57,7 +57,9 @@ In order to use this API services, you are required to create an account by regi
     {"bk":
       {"data":
         {   "email":  "example@somemail.com",
-            "name":  "Your Name", 
+            "username":  "Your Name",
+            "firstname": "First Name",
+            "lastname": "Last Name", 
             "password":"yourpassword"
         }
       }
