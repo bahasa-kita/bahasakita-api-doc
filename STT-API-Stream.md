@@ -25,7 +25,7 @@ Documentation API STT to bahasakita speech recognition service with the WebSocke
   | [stop stream audio](#state-3-audiostop) | type : AudioStop    | end stream. you need to request [start stream audio](#start-stream-audio) if you want to send audio again after [stop stream audio](#stop-stream-audio) |
 
 ## **URL ACCESS**
-  `wss://v1/prod/api.bahasakita.co.id/stream?token=xxxxxxxxxx`
+  `wss://api.bahasakita.co.id/v1/prod/stream?token=xxxxxxxxxx`
 
 
 ## **"How to Use" Flow**
