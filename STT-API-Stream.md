@@ -254,7 +254,7 @@ OR
       remainder = audiosize
 
       #######################################
-      # Example for processing "audioConn" type 
+      # Example : processing "audioConn" type 
       #######################################
 
       msg = {
@@ -296,7 +296,7 @@ OR
               bschunk = base64.b64encode(chunk)
 
               #######################################
-              # Example for processing "audioStream" type 
+              # Example : processing "audioStream" type 
               #######################################
 
               # please, add "sess_id"  with session id after you get from audio connect process.
@@ -317,7 +317,7 @@ OR
               remainder = remainder - chunksize
 
           #######################################
-          # Example for processing "audioStop" type 
+          # Example: processing "audioStop" type 
           #######################################
             
           msg = {
