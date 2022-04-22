@@ -243,7 +243,7 @@ OR
       ws = websocket.WebSocket()
 
       # change with your token.
-      ws.connect("wss://v1/prod/api.bahasakita.co.id/stream?token=****************************") 
+      ws.connect("wss://api.bahasakita.co.id/v1/prod/stream?token=****************************") 
       
       f = open(args.filename, "rb")
       f.seek(0, os.SEEK_END)
