@@ -49,7 +49,9 @@ In order to use this API services, you are required to create an account by regi
   | Field | Data Type | Description |
   | ------ | ------ | ------ |
   | email | String |standard email |
-  | name| String |  your name|
+  | username| String |  your unique name|
+  | firstname| String | first name|
+  | lastname| String | last name |
   | password| String | your password |
 
 ##### **Request Example:**
