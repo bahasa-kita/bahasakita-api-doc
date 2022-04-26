@@ -35,7 +35,7 @@ In order to use this API services, you are required to create an account by regi
   [https://api.bahasakita.co.id](https://api.bahasakita.co.id)
 
 ### **Endpoint**
-  `/v1/prod/register/`
+  `/v1/prod/register`
 
 ### **Method:**
   `POST`
@@ -96,7 +96,7 @@ In order to use this API services, you are required to create an account by regi
   [https://api.bahasakita.co.id](https://api.bahasakita.co.id)
 
 ### **Endpoint**
-  `/v1/prod/getToken/`
+  `/v1/prod/getToken`
 
 ### **Method:**
   `POST`
