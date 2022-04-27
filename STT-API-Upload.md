@@ -43,10 +43,11 @@ Documentation API STT to bahasakita speech recognition service
   | ------ | ------ |
   | Content-Type | `multipart/form-data` |
    | Authorization | `Bearer token` |
+
 ##### **Body**
   | Field | Data Type | Description |
   | ------ | ------ | ------ |
-  | files | File |Your audio file  |
+  | file | File |Your audio file  |
 
 ### **Response**
   | Field | Data Type | Description |
@@ -89,7 +90,7 @@ def main():
         parser.print_help()
         return
 
-    url = "https://v1/prod/api.bahasakita.co.id/stt/upload"
+    url = "https://api.bahasakita.co.id/v1/prod/stt/upload"
     
     headers={'Authorization': 'Bearer <your token>'}
     
