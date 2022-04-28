@@ -11,4 +11,4 @@ Items       | Sub-Items | Description |
  |      |[STT API Upload](./STT-API-Upload.md) | Speech to Text API Documentation for uploading with CPU process |
 
 ## **Live Demo**
-  URL Link : [Live Demo](https://devlive.bahasakita.co.id/)
+  URL Link : [**Live Demo**](https://devlive.bahasakita.co.id/)
