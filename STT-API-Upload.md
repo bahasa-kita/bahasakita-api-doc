@@ -69,7 +69,7 @@ Documentation API STT to bahasakita speech recognition service
 ```
 
 ### **Sample Call in Python:**
-  ```
+```
 import requests
 import sys
 import os
@@ -101,4 +101,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 ```

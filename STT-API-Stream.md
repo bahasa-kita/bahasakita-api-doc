@@ -184,162 +184,104 @@ OR
 ```
 
 ### **Sample Call in Python:**
-  ```
-  import os
-  import sys
-  import json
-  import base64
-  import time
-  import websocket
-  import threading
-  from argparse import ArgumentParser
+```
+import asyncio
+import json
+import websockets
+import sys
+import os
+from argparse import ArgumentParser
+import base64
+
+async def main():
+
+    parser = ArgumentParser()
+    parser.add_argument("-f", "--file", dest="filename",
+                help="write report to FILE", metavar="FILE")
+    parser.add_argument("-v", "--verbose",
+                action="store_false", dest="verbose", default=True,
+                help="don't print status messages to stdout")
 
 
-  bBreak = False
+    args = parser.parse_args()
 
-  def recv_message(self): 
-      global bBreak
-      while True:
-          
-          reply = self.recv()
-          
-          if not reply is None:
-              
-              reply = json.loads(reply)            
-              
-              if "bk" in reply :
-                  if reply["bk"]["status"] == 400:                    
-                      bBreak = True
-                      print("Break Process")
-                      break      
-                  
-                  elif "stt" in reply["bk"]["service"]:
-
-                      if "data" in reply["bk"]:
-                          print(reply["bk"]["data"])
-                  
-                      if reply["bk"]["type"] == "audioStop":
-                          print("Audio Stop")
-                          break
-                      
-
-  def main():
-
-
-      parser = ArgumentParser()
-      parser.add_argument("-f", "--file", dest="filename",
-                  help="write report to FILE", metavar="FILE")
-      parser.add_argument("-v", "--verbose",
-                  action="store_false", dest="verbose", default=True,
-                  help="don't print status messages to stdout")
-
-      args = parser.parse_args()
-
-      if len(sys.argv) <= 2 or not os.path.exists(args.filename) :
-        parser.print_help()
-        return
-
-      websocket.enableTrace(False)
-      ws = websocket.WebSocket()
-
-      # change with your token.
-      ws.connect("wss://api.bahasakita.co.id/v1/prod/stream?token=****************************") 
-      
-      f = open(args.filename, "rb")
-      f.seek(0, os.SEEK_END)
-      audiosize = f.tell()
-      f.seek(44, os.SEEK_SET)
-      rate = 16000
-      chunksize = 3200
-      remainder = audiosize
-
-      #######################################
-      # Example : processing "audioConn" type 
-      #######################################
-
-      msg = {
-          "bk": {
-              "service": "stt",
-              "type": "audioConn",            
-          }
-      }
-      msg = json.dumps(msg)
-
-      ws.send(msg)
-      reply = ws.recv()
-      reply = json.loads(reply)
-      
-      status_code = reply["bk"]["status"]
-      
-      if status_code == 400:
-          print(reply["bk"]["error"])
-          return
-      
-      sess_id = reply["bk"]["data"]["sess_id"]
+    if len(sys.argv) <= 2 or not os.path.exists(args.filename) :
+      parser.print_help()
+      return
     
-      if status_code == 200:
-          
-      
-          sendThread = threading.Thread(target=recv_message, args=[ws])
-          sendThread.setDaemon(True)
-          sendThread.start()
+    filename = args.filename
 
-          # if you set this read audio file
-          while remainder > 0 :
-              if bBreak :
-                  break    
-              if remainder < chunksize:
-                  chunksize = remainder
+    # Websocket URL, changed with your token     
+    url = "wss://apidev.bahasakita.co.id:8765/v1/prod/stream?token=<your_token>"
+    
+    async with websockets.connect(url) as ws:
 
-              time.sleep(0.01)
-              chunk = f.read(chunksize)
-              bschunk = base64.b64encode(chunk)
+        # Configure the session
+        msg = {
+        "bk": {
+            "service": "stt",
+            "type": "audioConn"           
+        }
+        } 
+        await ws.send(json.dumps(msg))
+        reply = await ws.recv()  # Receive message
+        # print("Response :",reply)    
+        reply = json.loads(reply)
+        if reply["bk"]["status"] == 200 :
+           
+            sess_id = reply["bk"]["data"]["sess_id"]
+            # Concurrently send audio data and receive results
+            await asyncio.gather(
+                send_audio(filename, ws, sess_id),
+                receive_message(ws)
+            )
 
-              #######################################
-              # Example : processing "audioStream" type 
-              #######################################
 
-              # please, add "sess_id"  with session id after you get from audio connect process.
-              msg = {
-                  "bk": {
-                      "service": "stt",
-                      "sess_id": sess_id, 
-                      "type": "audioStream", 
-                      "data": {
-                          "audio": bschunk.decode("utf-8")
-                      },
-                  }
-              }
-              msg = json.dumps(msg)
-              #print("Send audio stream... ")
-              ws.send(msg)
-          
-              remainder = remainder - chunksize
+async def send_audio(filename: str, ws,sess_id, chunk_size: int = 3200):
+    with open(filename, "rb") as f:  # Read file to send
 
-          #######################################
-          # Example: processing "audioStop" type 
-          #######################################
+        while data := f.read(chunk_size):       
+            bschunk = base64.b64encode(data)
+            msg = {
+                "bk": {
+                    "service": "stt",
+                    "sess_id": sess_id,
+                    "type": "audioStream", 
+                    "data": {
+                        "audio": bschunk.decode("utf-8")
+                    },
+                }
+            }
+            msg = json.dumps(msg)
+            await ws.send(msg)
+
+        msg = {
+            "bk": {
+                "service": "stt",
+                "sess_id": sess_id,                    
+                "type": "audioStop"                
+            }
+        }        
+        msg = json.dumps(msg)    
+        await ws.send(msg)
+
+async def receive_message(ws):
+    while True:
+        
+        reply = await ws.recv()  # Receive message
+        if not reply is None:
             
-          msg = {
-              "bk": {
-                  "service": "stt",
-                  "sess_id": sess_id,                    
-                  "type": "audioStop"                
-              }
-          }
-          
-          msg = json.dumps(msg)
+            reply = json.loads(reply)   
+            if "stt" in reply["bk"]["service"]:
 
-          print("Send eos audio ...")
-          ws.send(msg)
-          sendThread.join()
-          
+                if "data" in reply["bk"]:
+                    if "final" in reply["bk"]["data"]:
+                        print("Final :",reply["bk"]["data"]["final"])
+                    elif "partial" in reply["bk"]["data"]:
+                        print("Partial :",reply["bk"]["data"]["partial"])
+                        
 
-      print("Streaming end...")
-      ws.close()
+if __name__ == '__main__':
+    asyncio.run(main())
 
-
-  if __name__ == "__main__":
-      main()
-
-  ```
+```
