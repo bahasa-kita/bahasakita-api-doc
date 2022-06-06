@@ -212,7 +212,7 @@ async def main():
     filename = args.filename
 
     # Websocket URL, changed with your token     
-    url = "wss://apidev.bahasakita.co.id:8765/v1/prod/stream?token=<your_token>"
+    url = "wss://api.bahasakita.co.id/v1/prod/stream?token=<your_token>"
     
     async with websockets.connect(url) as ws:
 
