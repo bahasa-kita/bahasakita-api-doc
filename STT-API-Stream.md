@@ -214,9 +214,7 @@ async def main():
     # Websocket URL, changed with your token     
     url = "wss://api.bahasakita.co.id/v1/prod/stream?token=<your_token>"
     
-    async with websockets.connect(url) as ws:
-
-        # Configure the session
+    async with websockets.connect(url) as ws:        
         msg = {
         "bk": {
             "service": "stt",
@@ -230,7 +228,8 @@ async def main():
         if reply["bk"]["status"] == 200 :
            
             sess_id = reply["bk"]["data"]["sess_id"]
-            # Concurrently send audio data and receive results
+
+            # concurently send audio and receive message
             await asyncio.gather(
                 send_audio(filename, ws, sess_id),
                 receive_message(ws)
@@ -272,8 +271,7 @@ async def receive_message(ws):
         if not reply is None:
             
             reply = json.loads(reply)   
-            if "stt" in reply["bk"]["service"]:
-
+            if "service" in reply["bk"] and "stt" == reply["bk"]["service"]:
                 if "data" in reply["bk"]:
                     if "final" in reply["bk"]["data"]:
                         print("Final :",reply["bk"]["data"]["final"])
