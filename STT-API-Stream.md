@@ -186,100 +186,132 @@ OR
 ### **Sample Call in Python:**
 ```
 import asyncio
-import json
-import websockets
-import sys
-import os
-from argparse import ArgumentParser
 import base64
+import json
+import functools
+import signal
+import pyaudio
+import websockets
+
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 16000
+CHUNK = int(RATE / 10) # 3200 bytes / 100ms
+
+AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6ImlmMDUwNDFAZ21haWwuY29tIiwiZXhwIjoxNjU3MDgwMTAzfQ.gK4KwVbCXBYMhSTYJvKsJ1Mf30TamoALiqDXKcovI4w"
+
+queue: asyncio.Queue = None
+
+
+def ask_exit(signame, stream):
+    stream.stop_stream()    
+    print("got signal %s: exit" % signame)
+    
 
 async def main():
+    # Websocket URL, changed with your token
+    url = f"wss://apidev.bahasakita.co.id:8765/v1/prod/stream?token={AUTH_TOKEN}"
 
-    parser = ArgumentParser()
-    parser.add_argument("-f", "--file", dest="filename",
-                help="write report to FILE", metavar="FILE")
-    parser.add_argument("-v", "--verbose",
-                action="store_false", dest="verbose", default=True,
-                help="don't print status messages to stdout")
+    global queue
+    queue = asyncio.Queue()
 
-
-    args = parser.parse_args()
-
-    if len(sys.argv) <= 2 or not os.path.exists(args.filename) :
-      parser.print_help()
-      return
+    audio = pyaudio.PyAudio()
+    stream = audio.open(
+            format=FORMAT,
+            channels=CHANNELS,
+            rate=RATE,
+            input=True,
+            frames_per_buffer=CHUNK,
+            stream_callback=pyaudio_callback,
+        )
     
-    filename = args.filename
-
-    # Websocket URL, changed with your token     
-    url = "wss://api.bahasakita.co.id/v1/prod/stream?token=<your_token>"
+    loop = asyncio.get_running_loop()
     
-    async with websockets.connect(url) as ws:        
-        msg = {
-        "bk": {
-            "service": "stt",
-            "type": "audioConn"           
-        }
-        } 
+    for signame in {'SIGINT', 'SIGTERM'}:
+                loop.add_signal_handler(
+                getattr(signal, signame),
+                functools.partial(ask_exit, signame,stream))
+
+    async with websockets.connect(url) as ws:
+
+        # sending "audioConn type"
+        msg = {"bk": {"service": "stt", "type": "audioConn"}}
         await ws.send(json.dumps(msg))
         reply = await ws.recv()  # Receive message
-        # print("Response :",reply)    
+
+        print("Response :", reply)
         reply = json.loads(reply)
-        if reply["bk"]["status"] == 200 :
-           
+        if reply["bk"]["status"] == 200:
             sess_id = reply["bk"]["data"]["sess_id"]
 
-            # concurently send audio and receive message
+            recieve_task = asyncio.create_task(receive_message(ws,stream))
+            stream_task = asyncio.create_task(stream_mic(ws,sess_id,stream))
+
             await asyncio.gather(
-                send_audio(filename, ws, sess_id),
-                receive_message(ws)
+                recieve_task,
+                stream_task               
             )
+            stream.close()
+            print("Finished...")   
 
+async def stream_mic(ws,sess_id,stream):
 
-async def send_audio(filename: str, ws,sess_id, chunk_size: int = 3200):
-    with open(filename, "rb") as f:  # Read file to send
+    print("Streaming MIC .... ")
+    
+    while not stream.is_stopped():
+        data,status = await queue.get()  
+        #print(len(data))
+        bschunk = base64.b64encode(data)
 
-        while data := f.read(chunk_size):       
-            bschunk = base64.b64encode(data)
-            msg = {
-                "bk": {
-                    "service": "stt",
-                    "sess_id": sess_id,
-                    "type": "audioStream", 
-                    "data": {
-                        "audio": bschunk.decode("utf-8")
-                    },
-                }
-            }
-            msg = json.dumps(msg)
-            await ws.send(msg)
-
+        # sending "audioStream type"
         msg = {
             "bk": {
                 "service": "stt",
-                "sess_id": sess_id,                    
-                "type": "audioStop"                
+                "sess_id": sess_id,
+                "type": "audioStream",
+                "data": {"audio": bschunk.decode("utf-8")},
             }
-        }        
-        msg = json.dumps(msg)    
+        }
+        msg = json.dumps(msg)
+        #print("send :")
         await ws.send(msg)
+    
+    # sending "audioStop type"
+    msg = {"bk": {"service": "stt", "sess_id": sess_id, "type": "audioStop"}}
+    msg = json.dumps(msg)
+    await ws.send(msg)
+    #time.sleep(0.1)
 
-async def receive_message(ws):
-    while True:
-        
-        reply = await ws.recv()  # Receive message
-        if not reply is None:
-            
-            reply = json.loads(reply)   
-            if "service" in reply["bk"] and "stt" == reply["bk"]["service"]:
-                if "data" in reply["bk"]:
-                    if "final" in reply["bk"]["data"]:
-                        print("Final :",reply["bk"]["data"]["final"])
-                    elif "partial" in reply["bk"]["data"]:
-                        print("Partial :",reply["bk"]["data"]["partial"])
+def pyaudio_callback(in_data, frame_count, time_info, status):
+    # print("audio callback received")
+    queue.put_nowait((in_data, status))
+    # print("putted")
+    return in_data, pyaudio.paContinue
+
+async def receive_message(ws, stream):
+    print("Waiting Response....")
+
+    while not stream.is_stopped() :
+        try:
+            reply =  await asyncio.wait_for(ws.recv(), timeout=0.01) # Receive message
+            #print("REPLY :",reply)
+            if not reply is None:
+                reply = json.loads(reply)                
+                
+                if "stt" in reply["bk"]["service"]:
+                    if "type" in reply["bk"] and "audioStop" == reply["bk"]["type"]:  
+                        print("end of stream audio")                        
+                    elif "data" in reply["bk"]:
+                        if "final" in reply["bk"]["data"]:
+                            print("Final :", reply["bk"]["data"]["final"])
+                        elif "partial" in reply["bk"]["data"]:
+                            print("Partial :", reply["bk"]["data"]["partial"])      
                         
+        except asyncio.TimeoutError:
+            pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     asyncio.run(main())
 
 ```
