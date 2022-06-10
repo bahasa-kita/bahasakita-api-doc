@@ -198,8 +198,6 @@ CHANNELS = 1
 RATE = 16000
 CHUNK = int(RATE / 10) # 3200 bytes / 100ms
 
-AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6ImlmMDUwNDFAZ21haWwuY29tIiwiZXhwIjoxNjU3MDgwMTAzfQ.gK4KwVbCXBYMhSTYJvKsJ1Mf30TamoALiqDXKcovI4w"
-
 queue: asyncio.Queue = None
 
 
@@ -210,7 +208,7 @@ def ask_exit(signame, stream):
 
 async def main():
     # Websocket URL, changed with your token
-    url = f"wss://apidev.bahasakita.co.id:8765/v1/prod/stream?token={AUTH_TOKEN}"
+    url = f"wss://api.bahasakita.co.id/v1/prod/stream?token={AUTH_TOKEN}"
 
     global queue
     queue = asyncio.Queue()
