@@ -1,6 +1,6 @@
 
 # AUTH API DOCUMENTATION
-Documentation API to bahasakita speech recognition and NLP service.
+Auth API Documentation is instructions fo creating an user authorization that will be used to take advantage of all bahasakita services.
 
 
 #### **Table of Contents**
@@ -62,7 +62,7 @@ In order to use this API services, you are required to create an account by regi
             "username":  "Your Name",
             "firstname": "First Name",
             "lastname": "Last Name", 
-            "password":"yourpassword"
+            "password":"your password"
         }
       }
     }

@@ -1,5 +1,5 @@
 # **Speech to Text API**
-Documentation API STT to bahasakita speech recognition service
+API STT Documentation is guidance for communicate with bahasakita speech recognition service.
 
 #### **Table of Contents**
   - [General API Information](#general-api-information)
