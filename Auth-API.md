@@ -1,6 +1,6 @@
 
 # AUTH API DOCUMENTATION
-Auth API Documentation is instructions fo creating an user authorization that will be used to take advantage of all bahasakita services.
+Auth API Documentation is instructions for creating an user authorization that will be used to take advantage of all bahasakita services.
 
 
 #### **Table of Contents**
